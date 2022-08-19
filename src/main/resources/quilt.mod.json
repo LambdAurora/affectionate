@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "dev.lambdaurora",
+    "id": "affectionate",
+    "version": "${version}",
+    "metadata": {
+      "name": "Affectionate",
+      "description": "A mod about player interactions, made for Modfest: Singularity.",
+      "contributors": {
+        "LambdAurora": "Author"
+      },
+      "contact": {
+        "homepage": "https://modrinth.com/mod/affectionate",
+        "sources": "https://github.com/LambdAurora/affectionate.git",
+        "issues": "https://github.com/LambdAurora/affectionate/issues"
+      },
+      "license": "LGPL-3.0-only",
+      "icon": "assets/affectionate/icon.png"
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "init": [
+        "dev.lambdaurora.affectionate.Affectionate"
+      ],
+      "client_init": [
+        "dev.lambdaurora.affectionate.client.AffectionateClient"
+      ]
+    },
+    "depends": [
+      {
+        "id": "minecraft",
+        "versions": ">=1.19.2"
+      },
+      {
+        "id": "quilt_loader",
+        "versions": ">=0.17.3"
+      },
+      {
+        "id": "quilted_fabric_api",
+        "versions": ">=4.0.0-beta.8"
+      },
+      {
+        "id": "java",
+        "versions": ">=17"
+      }
+    ]
+  },
+  "mixin": "affectionate.mixins.json"
+}
