@@ -31,7 +31,7 @@ public class EntityMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getY()D"),
 			cancellable = true
 	)
-	private void onTurnHead(Entity passenger, Entity.PositionUpdater positionUpdater, CallbackInfo ci) {
+	private void affectionate$onUpdatePassengerPosition(Entity passenger, Entity.PositionUpdater positionUpdater, CallbackInfo ci) {
 		if (passenger instanceof LapSeatEntity lapSeat) {
 			ci.cancel();
 			lapSeat.updateTrackedPosition(positionUpdater);

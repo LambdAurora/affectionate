@@ -24,7 +24,10 @@
         "dev.lambdaurora.affectionate.Affectionate"
       ],
       "client_init": [
-        "dev.lambdaurora.affectionate.client.AffectionateClient"
+        "dev.lambdaurora.affectionate.client.AffectionateClient::INSTANCE"
+      ],
+      "client_events": [
+        "dev.lambdaurora.affectionate.client.AffectionateClient::INSTANCE"
       ]
     },
     "depends": [

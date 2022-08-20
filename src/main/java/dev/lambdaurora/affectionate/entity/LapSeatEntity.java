@@ -25,7 +25,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
@@ -44,7 +43,7 @@ import org.quiltmc.loader.api.minecraft.MinecraftQuiltLoader;
  */
 public class LapSeatEntity extends Entity {
 	private static final TrackedData<Integer> OWNER = DataTracker.registerData(LapSeatEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private PlayerEntity trackedOwner;
+	private LivingEntity trackedOwner;
 
 	public LapSeatEntity(EntityType<?> type, World world) {
 		super(type, world);
@@ -52,7 +51,7 @@ public class LapSeatEntity extends Entity {
 		this.noClip = true;
 	}
 
-	public void setTrackedOwner(PlayerEntity trackedOwner) {
+	public void setTrackedOwner(LivingEntity trackedOwner) {
 		this.dataTracker.set(OWNER, trackedOwner == null ? 0 : trackedOwner.getId());
 	}
 
@@ -71,7 +70,7 @@ public class LapSeatEntity extends Entity {
 				}
 			}
 
-			if (owner instanceof PlayerEntity player) {
+			if (owner instanceof LivingEntity player) {
 				this.trackedOwner = player;
 				this.startRiding(this.trackedOwner, true);
 			} else {
