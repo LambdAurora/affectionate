@@ -17,8 +17,6 @@
 
 package dev.lambdaurora.affectionate.entity;
 
-import net.fabricmc.api.EnvType;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -32,7 +30,6 @@ import net.minecraft.util.math.Quaternion;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3f;
 import net.minecraft.world.World;
-import org.quiltmc.loader.api.minecraft.MinecraftQuiltLoader;
 
 /**
  * Represents a placeholder entity to make another entity seat on the laps of a player.
@@ -60,15 +57,6 @@ public class LapSeatEntity extends Entity {
 		if (OWNER.equals(data)) {
 			int ownerId = this.dataTracker.get(OWNER);
 			var owner = this.world.getEntityById(ownerId);
-
-			if (this.world.isClient()
-					&& MinecraftQuiltLoader.getEnvironmentType() == EnvType.CLIENT) {
-				var selfPlayer = MinecraftClient.getInstance().player;
-
-				if (selfPlayer != null && selfPlayer.getId() == ownerId) {
-					owner = selfPlayer;
-				}
-			}
 
 			if (owner instanceof LivingEntity player) {
 				this.trackedOwner = player;

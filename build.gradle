@@ -171,7 +171,7 @@ modrinth {
 }
 tasks.modrinth.dependsOn(tasks.modrinthSyncBody)
 
-/*curseforge {
+curseforge {
 	if (System.getenv("CURSEFORGE_TOKEN")) {
 		apiKey = System.getenv("CURSEFORGE_TOKEN")
 	}
@@ -210,7 +210,7 @@ tasks.modrinth.dependsOn(tasks.modrinthSyncBody)
 		}
 	}
 }
-tasks.curseforge.setGroup("publishing")*/
+tasks.curseforge.setGroup("publishing")
 
 // configure the maven publication
 publishing {
