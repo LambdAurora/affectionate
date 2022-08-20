@@ -106,10 +106,6 @@ dependencies {
 	modImplementation("org.quiltmc.quilted-fabric-api:quilted-fabric-api:${project.fabric_api_version}-${minecraft_version}")
 
 	testmodImplementation sourceSets.main.output
-
-	/*modLocalRuntime ("supercoder79:databreaker:${databreaker_version}") {
-		exclude module: "fabric-loader"
-	}*/
 }
 
 java {

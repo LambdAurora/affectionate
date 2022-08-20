@@ -18,6 +18,9 @@ This mod will try to give you ways to do that!
 
 ![Sitting on Laps](https://lambdaurora.dev/images/projects/affectionate/lap_sitting.png)
 
+To trigger the heart emote simply press `G`!  
+The key bind can be found along the other multiplayer-related key binds.
+
 ![Show some love!](https://lambdaurora.dev/images/projects/affectionate/affectionate3.gif)
 
 ![Sitting on Laps](https://lambdaurora.dev/images/projects/affectionate/affectionate1.gif)
