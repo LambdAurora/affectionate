@@ -31,6 +31,27 @@ String parseReadme() {
 	def linkRegex = /!\[([A-z_ ]+)]\((images\/[A-z.\/_]+)\)/
 
 	def readme = (String) file('README.md').text
+	def lines = new ArrayList<>(Arrays.asList(readme.split("\n")))
+	def it = lines.iterator()
+
+	boolean shouldRemove = false;
+	while (it.hasNext()) {
+		def line = it.next();
+
+		if (line.equals("<!-- modrinth_exclude.long_start -->")) {
+			shouldRemove = true
+		}
+
+		if (shouldRemove) {
+			it.remove()
+		}
+
+		if (line.equals("<!-- modrinth_exclude.long_end -->")) {
+			shouldRemove = false
+		}
+	}
+
+	readme = lines.join("\n")
 	//readme = readme.replaceAll(linkRegex, '![$1](https://lambdaurora.dev/affectionate/$2)')
 	return readme
 }
@@ -149,6 +170,7 @@ modrinth {
 	versionType = this.getVersionType()
 	uploadFile = tasks.remapJar
 	syncBodyFrom = parseReadme()
+	println(parseReadme())
 
 	dependencies {
 		required.project "qsl"
