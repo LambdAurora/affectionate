@@ -170,7 +170,6 @@ modrinth {
 	versionType = this.getVersionType()
 	uploadFile = tasks.remapJar
 	syncBodyFrom = parseReadme()
-	println(parseReadme())
 
 	dependencies {
 		required.project "qsl"
