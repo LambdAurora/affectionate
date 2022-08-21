@@ -10,10 +10,10 @@ A mod about player interactions, made for Modfest: Singularity.
 
 ## What is it?
 
-This mod focuses on affective player interactions!
+This mod focuses on affectionate player interactions!
 
-Wanna sip on the laps of someone?
-Or to simply express a mark of affection with a heart?  
+Wanna sit on someone's laps?
+Or simply express affection with a heart?
 This mod will try to give you ways to do that!
 
 ![Sitting on Laps](https://lambdaurora.dev/images/projects/affectionate/lap_sitting.png)
