@@ -111,8 +111,11 @@ loom {
 
 repositories {
 	maven {
-		name = 'Gegy'
-		url = 'https://maven.gegy.dev/'
+		name = 'Modrinth'
+		url = 'https://api.modrinth.com/maven'
+		content {
+			includeGroup 'maven.modrinth'
+		}
 	}
 }
 
@@ -125,6 +128,7 @@ dependencies {
 	modImplementation "org.quiltmc:quilt-loader:${project.loader_version}"
 
 	modImplementation("org.quiltmc.quilted-fabric-api:quilted-fabric-api:${project.fabric_api_version}-${minecraft_version}")
+	modImplementation("maven.modrinth:ears:${project.ears_version}")
 
 	testmodImplementation sourceSets.main.output
 }
@@ -173,6 +177,7 @@ modrinth {
 
 	dependencies {
 		required.project "qsl"
+		optional.project "ears"
 	}
 
 	// Changelog fetching
@@ -218,6 +223,7 @@ curseforge {
 
 			relations {
 				requiredDependency "qsl"
+				optionalDependency "ears"
 			}
 		}
 

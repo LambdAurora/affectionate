@@ -6,7 +6,7 @@
     "version": "${version}",
     "metadata": {
       "name": "Affectionate",
-      "description": "A mod about player interactions, made for Modfest: Singularity.",
+      "description": "A mod about affectionate player interactions, made for Modfest: Singularity.",
       "contributors": {
         "LambdAurora": "Author"
       },
@@ -46,6 +46,10 @@
       {
         "id": "java",
         "versions": ">=17"
+      },
+      {
+        "id": "ears",
+        "optional": true
       }
     ]
   },

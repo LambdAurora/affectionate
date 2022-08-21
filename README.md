@@ -6,7 +6,7 @@
 [![Mod loader: Quilt]][quilt] <!-- modrinth_exclude.start -->
 ![Version](https://img.shields.io/github/v/tag/LambdAurora/affectionate?label=version&style=flat-square) <!-- modrinth_exclude.end -->
 
-A mod about player interactions, made for Modfest: Singularity.
+A mod about affectionate player interactions, made for Modfest: Singularity.
 
 ## What is it?
 
@@ -16,12 +16,22 @@ Wanna sit on someone's laps?
 Or simply express affection with a heart?  
 This mod will try to give you ways to do that!
 
+### Sit on laps!
+
 ![Sitting on Laps](https://lambdaurora.dev/images/projects/affectionate/lap_sitting.png)
+
+### Show some affection with heart emotes!
 
 To trigger the heart emote simply press `G`!  
 The key bind can be found along the other multiplayer-related key binds.
 
 ![Show some love!](https://lambdaurora.dev/images/projects/affectionate/affectionate3.gif)
+
+And if you have an [Ears](https://ears.unascribed.com) skin with a tail, the tail will wag too!
+
+![Tail wagging](https://lambdaurora.dev/images/projects/affectionate/tail_wag.gif)
+
+### More pictures
 
 ![Sitting on Laps](https://lambdaurora.dev/images/projects/affectionate/affectionate1.gif)
 

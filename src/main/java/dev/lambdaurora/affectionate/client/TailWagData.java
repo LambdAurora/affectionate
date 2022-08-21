@@ -15,23 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package dev.lambdaurora.affectionate.entity;
+package dev.lambdaurora.affectionate.client;
 
+import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
-/**
- * Represents an extension of {@link net.minecraft.entity.player.PlayerEntity}.
- *
- * @author LambdAurora
- */
-public interface AffectionatePlayerEntity {
-	void affectionate$startSendHeart();
-
-	boolean affectionate$isSendingHeart();
-
-	float affectionate$getHeartSendingDelta(float tickDelta);
-
-	default PlayerEntity affectionate$asPlayer() {
-		return (PlayerEntity) this;
+public record TailWagData(AffectionatePlayerEntity player, float tickDelta) {
+	public PlayerEntity asPlayer() {
+		return this.player.affectionate$asPlayer();
 	}
 }
