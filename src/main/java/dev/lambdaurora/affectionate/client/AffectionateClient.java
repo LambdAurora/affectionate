@@ -44,7 +44,6 @@ public final class AffectionateClient implements ClientModInitializer, ClientWor
 	));
 
 	public static final AffectionateClient INSTANCE = new AffectionateClient();
-	private static final ThreadLocal<TailWagData> TAIL_WAG = new ThreadLocal<>();
 
 	@Override
 	public void onInitializeClient(ModContainer mod) {
@@ -72,18 +71,6 @@ public final class AffectionateClient implements ClientModInitializer, ClientWor
 		}
 	}
 
-	public static void setTailWag(TailWagData player) {
-		if (player != null) {
-			TAIL_WAG.set(player);
-		} else {
-			TAIL_WAG.remove();
-		}
-	}
-
-	public static TailWagData getPlayerTailWag() {
-		return TAIL_WAG.get();
-	}
-
 	/**
 	 * Updates the player model freely.
 	 *
@@ -94,7 +81,6 @@ public final class AffectionateClient implements ClientModInitializer, ClientWor
 	 */
 	public static <E extends LivingEntity> void updatePlayerModel(PlayerEntityModel<E> model, AffectionatePlayerEntity player, float tickDelta) {
 		if (player.affectionate$isSendingHeart()) {
-			setTailWag(new TailWagData(player, tickDelta));
 			float delta = player.affectionate$getHeartSendingDelta(tickDelta);
 
 			final float targetPitch = (float) Math.toRadians(-110.f);
@@ -104,8 +90,6 @@ public final class AffectionateClient implements ClientModInitializer, ClientWor
 			final float targetYaw = (float) Math.toRadians(25.f);
 			model.rightArm.yaw = MathHelper.lerp(delta, model.rightArm.yaw, -targetYaw);
 			model.leftArm.yaw = MathHelper.lerp(delta, model.leftArm.yaw, targetYaw);
-		} else {
-			setTailWag(null);
 		}
 	}
 }

@@ -19,8 +19,7 @@ package dev.lambdaurora.affectionate.mixin.client;
 
 import com.unascribed.ears.api.features.EarsFeatures;
 import com.unascribed.ears.common.render.EarsRenderDelegate;
-import dev.lambdaurora.affectionate.client.AffectionateClient;
-import dev.lambdaurora.affectionate.client.TailWagData;
+import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,12 +39,10 @@ public class EarsRendererMixin {
 			require = 0
 	)
 	private static void onRenderTail(EarsFeatures features, EarsRenderDelegate delegate, int p, boolean drawEmissivity, CallbackInfo ci) {
-		if (features.tailMode == EarsFeatures.TailMode.VERTICAL) {
-			TailWagData data = AffectionateClient.getPlayerTailWag();
-
-			if (data != null) {
-				var entity = data.asPlayer();
-				final double tailAnimation = Math.sin((entity.getId() + entity.age + data.tickDelta()) * 0.5) * 30.0;
+		if (features.tailMode == EarsFeatures.TailMode.VERTICAL && delegate.getPeer() instanceof AffectionatePlayerEntity player) {
+			if (player.affectionate$shouldWagTail()) {
+				var entity = player.affectionate$asPlayer();
+				final double tailAnimation = Math.sin((entity.getId() + delegate.getTime()) * 0.5) * 30.0;
 				delegate.rotate((float) tailAnimation, 1, 0, 0);
 			}
 		}

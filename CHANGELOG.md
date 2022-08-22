@@ -10,4 +10,8 @@
 
 - Added [Ears] integration for tail wagging!
 
+### 1.1.1
+
+- Made [Ears] integration less error-prone.
+
 [Ears]: https://ears.unascribed.com

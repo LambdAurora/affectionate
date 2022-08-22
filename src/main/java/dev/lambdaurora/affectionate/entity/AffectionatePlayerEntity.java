@@ -31,6 +31,10 @@ public interface AffectionatePlayerEntity {
 
 	float affectionate$getHeartSendingDelta(float tickDelta);
 
+	default boolean affectionate$shouldWagTail() {
+		return this.affectionate$isSendingHeart();
+	}
+
 	default PlayerEntity affectionate$asPlayer() {
 		return (PlayerEntity) this;
 	}
