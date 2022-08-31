@@ -14,4 +14,8 @@
 
 - Made [Ears] integration less error-prone.
 
+### 1.1.2
+
+- Fixed requesting to sit on another player that isn't sitting not being ignored soon enough.
+
 [Ears]: https://ears.unascribed.com

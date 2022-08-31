@@ -68,7 +68,7 @@ public final class Affectionate implements ModInitializer {
 			if (!world.isClient() && entity instanceof PlayerEntity otherPlayer
 					&& otherPlayer.getPassengerList().stream().noneMatch(e -> e instanceof LapSeatEntity)) {
 				var vehicle = otherPlayer.getVehicle();
-				if (vehicle != null && vehicle.getType().isIn(DISALLOWED_SEATS_FOR_LAP) && !vehicle.getType().isIn(ALLOWED_SEATS_FOR_LAP)) {
+				if (vehicle == null || (vehicle.getType().isIn(DISALLOWED_SEATS_FOR_LAP) && !vehicle.getType().isIn(ALLOWED_SEATS_FOR_LAP))) {
 					return ActionResult.PASS;
 				}
 

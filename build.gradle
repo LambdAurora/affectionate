@@ -4,7 +4,7 @@ plugins {
 	id 'maven-publish'
 	id 'org.quiltmc.gradle.licenser' version '1.+'
 	id 'com.modrinth.minotaur' version '2.+'
-	id 'com.matthewprenger.cursegradle' version '1.4.+'
+	//id 'com.matthewprenger.cursegradle' version '1.4.+'
 }
 
 group = project.maven_group
@@ -193,6 +193,9 @@ modrinth {
 }
 tasks.modrinth.dependsOn(tasks.modrinthSyncBody)
 
+/*
+I cannot publish to CurseForge since they decided this project was inappropriate.
+Still awaiting a response from them.
 curseforge {
 	if (System.getenv("CURSEFORGE_TOKEN")) {
 		apiKey = System.getenv("CURSEFORGE_TOKEN")
@@ -234,6 +237,7 @@ curseforge {
 	}
 }
 tasks.curseforge.setGroup("publishing")
+ */
 
 // configure the maven publication
 publishing {
