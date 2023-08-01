@@ -21,8 +21,6 @@ import com.mojang.blaze3d.platform.InputUtil;
 import dev.lambdaurora.affectionate.Affectionate;
 import dev.lambdaurora.affectionate.client.renderer.LapSeatEntityRenderer;
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.MinecraftClient;
@@ -32,12 +30,13 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.MathHelper;
 import org.quiltmc.loader.api.ModContainer;
+import org.quiltmc.loader.api.minecraft.ClientOnly;
 import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
 import org.quiltmc.qsl.lifecycle.api.client.event.ClientWorldTickEvents;
 import org.quiltmc.qsl.networking.api.PacketByteBufs;
 import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
 
-@Environment(EnvType.CLIENT)
+@ClientOnly
 public final class AffectionateClient implements ClientModInitializer, ClientWorldTickEvents.Start {
 	private static final KeyBind SEND_HEART_KEY_BIND = KeyBindingHelper.registerKeyBinding(new KeyBind(
 			"key.affectionate.interact", InputUtil.KEY_G_CODE, KeyBind.MULTIPLAYER_CATEGORY

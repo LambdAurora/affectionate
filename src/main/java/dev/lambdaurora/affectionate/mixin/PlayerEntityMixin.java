@@ -23,10 +23,11 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.util.math.Quaternion;
+import net.minecraft.util.math.MathConstants;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
 import net.minecraft.world.World;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -63,13 +64,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Affectio
 		if (this.affectionate$isSendingHeart()) {
 			this.affectionate$heartSendingTicks--;
 
-			if (this.world.isClient() && this.affectionate$heartSendingTicks <= 5) {
-				var relativePos = new Vec3f(0.f, 1.5f, .60f);
-				relativePos.rotate(new Quaternion(0.f, -this.bodyYaw, 0.f, true));
+			if (this.getWorld().isClient() && this.affectionate$heartSendingTicks <= 5) {
+				var relativePos = new Vector3f(0.f, 1.5f, .60f);
+				relativePos.rotate(new Quaternionf().rotationXYZ(0.f, -Affectionate.getEffectiveBodyYaw(this) * MathConstants.RADIANS_PER_DEGREE, 0.f));
 				Vec3d transformedPos = new Vec3d(relativePos);
 
 				var pos = this.getPos().add(transformedPos);
-				this.world.addImportantParticle(ParticleTypes.HEART,
+				this.getWorld().addImportantParticle(ParticleTypes.HEART,
 						pos.getX(), pos.getY(), pos.getZ(),
 						transformedPos.getX() * 10, -0.2f, transformedPos.getZ() * 10
 				);

@@ -20,6 +20,7 @@ package dev.lambdaurora.affectionate.mixin.client;
 import com.unascribed.ears.api.features.EarsFeatures;
 import com.unascribed.ears.common.render.EarsRenderDelegate;
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
+import org.quiltmc.loader.api.minecraft.ClientOnly;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,6 +28,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
+@ClientOnly
 @Mixin(targets = "com.unascribed.ears.common.EarsRenderer")
 public class EarsRendererMixin {
 	@Inject(

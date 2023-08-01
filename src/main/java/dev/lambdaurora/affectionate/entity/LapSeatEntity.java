@@ -17,6 +17,7 @@
 
 package dev.lambdaurora.affectionate.entity;
 
+import dev.lambdaurora.affectionate.Affectionate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -24,12 +25,14 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.Packet;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
-import net.minecraft.util.math.Quaternion;
+import net.minecraft.util.math.MathConstants;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
 import net.minecraft.world.World;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * Represents a placeholder entity to make another entity seat on the laps of a player.
@@ -53,10 +56,10 @@ public class LapSeatEntity extends Entity {
 	}
 
 	@Override
-	public void onTrackedDataSet(TrackedData<?> data) {
+	public void onTrackedDataUpdate(TrackedData<?> data) {
 		if (OWNER.equals(data)) {
 			int ownerId = this.dataTracker.get(OWNER);
-			var owner = this.world.getEntityById(ownerId);
+			var owner = this.getWorld().getEntityById(ownerId);
 
 			if (owner instanceof LivingEntity player) {
 				this.trackedOwner = player;
@@ -70,8 +73,8 @@ public class LapSeatEntity extends Entity {
 	public void updateTrackedPosition(Entity.PositionUpdater positionUpdater) {
 		if (this.trackedOwner == null) return;
 
-		var relativePos = new Vec3f(0.f, .4f, .55f);
-		relativePos.rotate(new Quaternion(0.f, -this.trackedOwner.bodyYaw, 0.f, true));
+		var relativePos = new Vector3f(0.f, .4f, .55f);
+		relativePos.rotate(new Quaternionf().rotationXYZ(0.f, -Affectionate.getEffectiveBodyYaw(this.trackedOwner) * MathConstants.RADIANS_PER_DEGREE, 0.f));
 		Vec3d transformedPos = new Vec3d(relativePos);
 
 		var newPos = this.trackedOwner.getPos().add(transformedPos);
@@ -125,7 +128,7 @@ public class LapSeatEntity extends Entity {
 	/* Networking */
 
 	@Override
-	public Packet<?> createSpawnPacket() {
+	public Packet<ClientPlayPacketListener> createSpawnPacket() {
 		return new EntitySpawnS2CPacket(this);
 	}
 
@@ -135,7 +138,7 @@ public class LapSeatEntity extends Entity {
 	public void tick() {
 		super.tick();
 
-		if (!this.world.isClient()) {
+		if (!this.getWorld().isClient()) {
 			if (!this.hasPassengers() || this.trackedOwner == null || this.trackedOwner.isRemoved() || !this.trackedOwner.hasVehicle()) {
 				this.discard();
 			}

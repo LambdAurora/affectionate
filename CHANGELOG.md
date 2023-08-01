@@ -18,4 +18,8 @@
 
 - Fixed requesting to sit on another player that isn't sitting not being ignored soon enough.
 
+### 1.1.3
+
+- Fixed inaccurate sitting position when lap sitting on a player sitting on a living entity.
+
 [Ears]: https://ears.unascribed.com

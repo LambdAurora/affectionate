@@ -23,14 +23,18 @@ import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.tag.TagKey;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.math.MathHelper;
 import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
 import org.quiltmc.qsl.networking.api.PacketByteBufs;
@@ -43,15 +47,15 @@ public final class Affectionate implements ModInitializer {
 	public static final String NAMESPACE = "affectionate";
 
 	/* Tags */
-	public static final TagKey<EntityType<?>> DISALLOWED_SEATS_FOR_LAP = TagKey.of(Registry.ENTITY_TYPE_KEY, id("disallowed_seats_for_lap"));
-	public static final TagKey<EntityType<?>> ALLOWED_SEATS_FOR_LAP = TagKey.of(Registry.ENTITY_TYPE_KEY, id("allowed_seats_for_lap"));
+	public static final TagKey<EntityType<?>> DISALLOWED_SEATS_FOR_LAP = TagKey.of(RegistryKeys.ENTITY_TYPE, id("disallowed_seats_for_lap"));
+	public static final TagKey<EntityType<?>> ALLOWED_SEATS_FOR_LAP = TagKey.of(RegistryKeys.ENTITY_TYPE, id("allowed_seats_for_lap"));
 
 	/* Packets */
 	public static final Identifier SEND_HEARTS_PACKET = id("send_hearts");
 
 
 	/* Entities */
-	public static final EntityType<LapSeatEntity> LAP_SEAT_ENTITY_TYPE = Registry.register(Registry.ENTITY_TYPE, id("lap_seat"),
+	public static final EntityType<LapSeatEntity> LAP_SEAT_ENTITY_TYPE = Registry.register(Registries.ENTITY_TYPE, id("lap_seat"),
 			FabricEntityTypeBuilder.create(SpawnGroup.MISC, LapSeatEntity::new)
 					.dimensions(EntityDimensions.fixed(0.f, 0.f))
 					.disableSaving()
@@ -110,5 +114,29 @@ public final class Affectionate implements ModInitializer {
 
 	public static Identifier id(String path) {
 		return new Identifier(NAMESPACE, path);
+	}
+
+	public static float getEffectiveBodyYaw(LivingEntity entity) {
+		float bodyYaw = entity.bodyYaw;
+		if (entity.hasVehicle() && entity.getVehicle() instanceof LivingEntity vehicle) {
+			bodyYaw = vehicle.bodyYaw;
+
+			float delta = entity.headYaw - bodyYaw;
+			float deltaDegrees = MathHelper.wrapDegrees(delta);
+			if (deltaDegrees < -85.0F) {
+				deltaDegrees = -85.0F;
+			}
+
+			if (deltaDegrees >= 85.0F) {
+				deltaDegrees = 85.0F;
+			}
+
+			bodyYaw = entity.headYaw - deltaDegrees;
+			if (deltaDegrees * deltaDegrees > 2500.0F) {
+				bodyYaw += deltaDegrees * 0.2F;
+			}
+		}
+
+		return bodyYaw;
 	}
 }
