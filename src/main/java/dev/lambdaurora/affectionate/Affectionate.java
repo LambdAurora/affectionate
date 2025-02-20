@@ -19,8 +19,15 @@ package dev.lambdaurora.affectionate;
 
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
 import dev.lambdaurora.affectionate.entity.LapSeatEntity;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -35,13 +42,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
-import org.quiltmc.qsl.networking.api.PacketByteBufs;
-import org.quiltmc.qsl.networking.api.PlayerLookup;
-import org.quiltmc.qsl.networking.api.ServerPlayNetworking;
-import org.quiltmc.qsl.resource.loader.api.ResourceLoader;
-import org.quiltmc.qsl.resource.loader.api.ResourcePackActivationType;
 
 public final class Affectionate implements ModInitializer {
 	public static final String NAMESPACE = "affectionate";
@@ -67,7 +67,7 @@ public final class Affectionate implements ModInitializer {
 	public static final int SENDING_HEARTS_TICKS = 10;
 
 	@Override
-	public void onInitialize(ModContainer mod) {
+	public void onInitialize() {
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if (!world.isClient() && entity instanceof PlayerEntity otherPlayer
 					&& otherPlayer.getPassengerList().stream().noneMatch(e -> e instanceof LapSeatEntity)) {
@@ -100,16 +100,20 @@ public final class Affectionate implements ModInitializer {
 					var newBuf = PacketByteBufs.create();
 					newBuf.writeVarInt(player.getId());
 
-					ServerPlayNetworking.send(PlayerLookup.tracking(player), SEND_HEARTS_PACKET, newBuf);
+					for (final var tracking : PlayerLookup.tracking(player)) {
+						ServerPlayNetworking.send(tracking, SEND_HEARTS_PACKET, newBuf);
+					}
 				}
 			});
 		});
 
-		ResourceLoader.registerBuiltinResourcePack(id("recursive_sitting"), mod, ResourcePackActivationType.NORMAL,
+		final var mod = FabricLoader.getInstance().getModContainer(NAMESPACE).orElseThrow();
+
+		ResourceManagerHelper.registerBuiltinResourcePack(id("recursive_sitting"), mod,
 				Text.literal("Affectionate").formatted(Formatting.LIGHT_PURPLE)
 						.append(Text.literal(" - ").formatted(Formatting.GRAY))
-						.append(Text.literal("Recursive Lap Sitting").formatted(Formatting.RED))
-		);
+						.append(Text.literal("Recursive Lap Sitting").formatted(Formatting.RED)),
+				ResourcePackActivationType.NORMAL);
 	}
 
 	public static Identifier id(String path) {

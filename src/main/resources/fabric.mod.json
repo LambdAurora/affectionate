@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "affectionate",
+	"version": "${version}",
+	"name": "Affectionate",
+	"description": "A mod about affectionate player interactions, made for Modfest: Singularity.",
+	"contributors": [
+		"LambdAurora"
+	],
+	"contact": {
+		"homepage": "https://lambdaurora.dev/projects/affectionate",
+		"sources": "https://github.com/LambdAurora/affectionate.git",
+		"issues": "https://github.com/LambdAurora/affectionate/issues"
+	},
+	"license": "LGPL-3.0-only",
+	"icon": "assets/affectionate/icon.png",
+	"entrypoints": {
+		"main": [
+			"dev.lambdaurora.affectionate.Affectionate"
+		],
+		"client": [
+			"dev.lambdaurora.affectionate.client.AffectionateClient"
+		]
+	},
+	"depends": {
+		"minecraft": ">=1.20",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"ears": "*"
+	},
+	"mixins": [
+		"affectionate.mixins.json"
+	],
+	"environment": "*"
+}

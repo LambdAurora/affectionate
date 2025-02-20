@@ -19,15 +19,16 @@ package dev.lambdaurora.affectionate.mixin.client;
 
 import dev.lambdaurora.affectionate.client.AffectionateClient;
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.entity.LivingEntity;
-import org.quiltmc.loader.api.minecraft.ClientOnly;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@ClientOnly
+@Environment(EnvType.CLIENT)
 @Mixin(PlayerEntityModel.class)
 public class PlayerEntityModelMixin<T extends LivingEntity> {
 	@SuppressWarnings("unchecked")

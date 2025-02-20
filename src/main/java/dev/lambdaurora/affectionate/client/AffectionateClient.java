@@ -21,32 +21,32 @@ import com.mojang.blaze3d.platform.InputUtil;
 import dev.lambdaurora.affectionate.Affectionate;
 import dev.lambdaurora.affectionate.client.renderer.LapSeatEntityRenderer;
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBind;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.MathHelper;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.loader.api.minecraft.ClientOnly;
-import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
-import org.quiltmc.qsl.lifecycle.api.client.event.ClientWorldTickEvents;
-import org.quiltmc.qsl.networking.api.PacketByteBufs;
-import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
 
-@ClientOnly
-public final class AffectionateClient implements ClientModInitializer, ClientWorldTickEvents.Start {
+@Environment(EnvType.CLIENT)
+public final class AffectionateClient implements ClientModInitializer, ClientTickEvents.StartWorldTick {
 	private static final KeyBind SEND_HEART_KEY_BIND = KeyBindingHelper.registerKeyBinding(new KeyBind(
 			"key.affectionate.interact", InputUtil.KEY_G_CODE, KeyBind.MULTIPLAYER_CATEGORY
 	));
 
-	public static final AffectionateClient INSTANCE = new AffectionateClient();
-
 	@Override
-	public void onInitializeClient(ModContainer mod) {
+	public void onInitializeClient() {
 		EntityRendererRegistry.register(Affectionate.LAP_SEAT_ENTITY_TYPE, LapSeatEntityRenderer::new);
+
+		ClientTickEvents.START_WORLD_TICK.register(this);
 
 		ClientPlayNetworking.registerGlobalReceiver(Affectionate.SEND_HEARTS_PACKET, (client, handler, buf, responseSender) -> {
 			int playerId = buf.readVarInt();
@@ -60,7 +60,8 @@ public final class AffectionateClient implements ClientModInitializer, ClientWor
 	}
 
 	@Override
-	public void startWorldTick(MinecraftClient client, ClientWorld world) {
+	public void onStartTick(ClientWorld world) {
+		final var client = MinecraftClient.getInstance();
 		if (SEND_HEART_KEY_BIND.wasPressed() && client.player != null) {
 			if (!((AffectionatePlayerEntity) client.player).affectionate$isSendingHeart()) {
 				((AffectionatePlayerEntity) client.player).affectionate$startSendHeart();
