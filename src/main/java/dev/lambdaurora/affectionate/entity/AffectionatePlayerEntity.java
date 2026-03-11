@@ -17,10 +17,10 @@
 
 package dev.lambdaurora.affectionate.entity;
 
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 
 /**
- * Represents an extension of {@link net.minecraft.entity.player.PlayerEntity}.
+ * Represents an extension of {@link net.minecraft.world.entity.player.Player}.
  *
  * @author LambdAurora
  */
@@ -35,7 +35,7 @@ public interface AffectionatePlayerEntity {
 		return this.affectionate$isSendingHeart();
 	}
 
-	default PlayerEntity affectionate$asPlayer() {
-		return (PlayerEntity) this;
+	default Player affectionate$asPlayer() {
+		return (Player) this;
 	}
 }

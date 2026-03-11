@@ -19,48 +19,49 @@ package dev.lambdaurora.affectionate;
 
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
 import dev.lambdaurora.affectionate.entity.LapSeatEntity;
+import dev.lambdaurora.affectionate.network.SendHeartsPayload;
+import dev.yumi.mc.core.api.ModContainer;
+import dev.yumi.mc.core.api.entrypoint.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.Formatting;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Text;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.math.MathHelper;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
-import org.quiltmc.qsl.networking.api.PacketByteBufs;
-import org.quiltmc.qsl.networking.api.PlayerLookup;
-import org.quiltmc.qsl.networking.api.ServerPlayNetworking;
-import org.quiltmc.qsl.resource.loader.api.ResourceLoader;
-import org.quiltmc.qsl.resource.loader.api.ResourcePackActivationType;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.player.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public final class Affectionate implements ModInitializer {
+	public static final Logger LOGGER = LoggerFactory.getLogger(Affectionate.class);
 	public static final String NAMESPACE = "affectionate";
 
 	/* Tags */
-	public static final TagKey<EntityType<?>> DISALLOWED_SEATS_FOR_LAP = TagKey.of(RegistryKeys.ENTITY_TYPE, id("disallowed_seats_for_lap"));
-	public static final TagKey<EntityType<?>> ALLOWED_SEATS_FOR_LAP = TagKey.of(RegistryKeys.ENTITY_TYPE, id("allowed_seats_for_lap"));
-
-	/* Packets */
-	public static final Identifier SEND_HEARTS_PACKET = id("send_hearts");
-
+	public static final TagKey<EntityType<?>> DISALLOWED_SEATS_FOR_LAP = TagKey.of(Registries.ENTITY_TYPE, id("disallowed_seats_for_lap"));
+	public static final TagKey<EntityType<?>> ALLOWED_SEATS_FOR_LAP = TagKey.of(Registries.ENTITY_TYPE, id("allowed_seats_for_lap"));
 
 	/* Entities */
-	public static final EntityType<LapSeatEntity> LAP_SEAT_ENTITY_TYPE = Registry.register(Registries.ENTITY_TYPE, id("lap_seat"),
-			FabricEntityTypeBuilder.create(SpawnGroup.MISC, LapSeatEntity::new)
-					.dimensions(EntityDimensions.fixed(0.f, 0.f))
-					.disableSaving()
-					.disableSummon()
-					.trackRangeChunks(10)
+	public static final EntityType<LapSeatEntity> LAP_SEAT_ENTITY_TYPE = Registry.register(BuiltInRegistries.ENTITY_TYPE, id("lap_seat"),
+			EntityType.Builder.of(LapSeatEntity::new, MobCategory.MISC)
+					.sized(0.f, 0.f) // this is not `EntityDimensions.fixed` tho...
+					.noSave()
+					.noSummon()
+					.clientTrackingRange(10)
 					.build()
 	);
 
@@ -69,59 +70,70 @@ public final class Affectionate implements ModInitializer {
 	@Override
 	public void onInitialize(ModContainer mod) {
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-			if (!world.isClient() && entity instanceof PlayerEntity otherPlayer
-					&& otherPlayer.getPassengerList().stream().noneMatch(e -> e instanceof LapSeatEntity)) {
+			if (!world.isClientSide() && entity instanceof Player otherPlayer
+					&& otherPlayer.getPassengers().stream().noneMatch(e -> e instanceof LapSeatEntity)) {
 				var vehicle = otherPlayer.getVehicle();
-				if (vehicle == null || (vehicle.getType().isIn(DISALLOWED_SEATS_FOR_LAP) && !vehicle.getType().isIn(ALLOWED_SEATS_FOR_LAP))) {
-					return ActionResult.PASS;
+				if (vehicle == null || (vehicle.getType().is(DISALLOWED_SEATS_FOR_LAP) && !vehicle.getType().is(ALLOWED_SEATS_FOR_LAP))) {
+					return InteractionResult.PASS;
 				}
 
 				var lapSeat = LAP_SEAT_ENTITY_TYPE.create(world);
 				if (lapSeat == null)
-					return ActionResult.PASS;
+					return InteractionResult.PASS;
 
-				world.spawnEntity(lapSeat);
+				// Track player and set position before spawning.
 				lapSeat.setTrackedOwner(otherPlayer);
+				world.addFreshEntity(lapSeat);
 				player.startRiding(lapSeat, true);
 
-				return ActionResult.SUCCESS;
+				return InteractionResult.SUCCESS;
 			}
 
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 
-		ServerPlayNetworking.registerGlobalReceiver(SEND_HEARTS_PACKET, (server, player, handler, buf, responseSender) -> {
-			server.execute(() -> {
-				var affectionatePlayer = (AffectionatePlayerEntity) player;
+		PayloadTypeRegistry.playS2C().register(SendHeartsPayload.TYPE, SendHeartsPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(SendHeartsPayload.TYPE, SendHeartsPayload.CODEC);
+
+		ServerPlayNetworking.registerGlobalReceiver(SendHeartsPayload.TYPE, (sPayload, ctx) -> {
+			ctx.server().execute(() -> {
+				final var player = ctx.player();
+				final var affectionatePlayer = (AffectionatePlayerEntity) player;
 
 				if (!affectionatePlayer.affectionate$isSendingHeart()) {
 					affectionatePlayer.affectionate$startSendHeart();
 
-					var newBuf = PacketByteBufs.create();
-					newBuf.writeVarInt(player.getId());
-
-					ServerPlayNetworking.send(PlayerLookup.tracking(player), SEND_HEARTS_PACKET, newBuf);
+					var payload = new SendHeartsPayload(player.getId());
+					for (ServerPlayer tracking : PlayerLookup.tracking(player)) {
+						ServerPlayNetworking.send(tracking, payload);
+					}
 				}
 			});
 		});
 
-		ResourceLoader.registerBuiltinResourcePack(id("recursive_sitting"), mod, ResourcePackActivationType.NORMAL,
-				Text.literal("Affectionate").formatted(Formatting.LIGHT_PURPLE)
-						.append(Text.literal(" - ").formatted(Formatting.GRAY))
-						.append(Text.literal("Recursive Lap Sitting").formatted(Formatting.RED))
+		final var registeredPack = ResourceManagerHelper.registerBuiltinResourcePack(
+				id("recursive_sitting"),
+				FabricLoader.getInstance().getModContainer(mod.id()).orElseThrow(),
+				Text.literal("Affectionate").withStyle(Formatting.LIGHT_PURPLE)
+						.append(Text.literal(" - ").withStyle(Formatting.GRAY))
+						.append(Text.literal("Recursive Lap Sitting").withStyle(Formatting.RED)),
+				ResourcePackActivationType.NORMAL
 		);
+		if (!registeredPack) {
+			LOGGER.warn("Failed to register built-in resource pack.");
+		}
 	}
 
 	public static Identifier id(String path) {
-		return new Identifier(NAMESPACE, path);
+		return Identifier.of(NAMESPACE, path);
 	}
 
 	public static float getEffectiveBodyYaw(LivingEntity entity) {
-		float bodyYaw = entity.bodyYaw;
-		if (entity.hasVehicle() && entity.getVehicle() instanceof LivingEntity vehicle) {
-			bodyYaw = vehicle.bodyYaw;
+		float bodyYaw = entity.yBodyRot;
+		if (entity.isPassenger() && entity.getVehicle() instanceof LivingEntity vehicle) {
+			bodyYaw = vehicle.yBodyRot;
 
-			float delta = entity.headYaw - bodyYaw;
+			float delta = entity.yHeadRot - bodyYaw;
 			float deltaDegrees = MathHelper.wrapDegrees(delta);
 			if (deltaDegrees < -85.0F) {
 				deltaDegrees = -85.0F;
@@ -131,7 +143,7 @@ public final class Affectionate implements ModInitializer {
 				deltaDegrees = 85.0F;
 			}
 
-			bodyYaw = entity.headYaw - deltaDegrees;
+			bodyYaw = entity.yHeadRot - deltaDegrees;
 			if (deltaDegrees * deltaDegrees > 2500.0F) {
 				bodyYaw += deltaDegrees * 0.2F;
 			}

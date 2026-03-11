@@ -19,29 +19,30 @@ package dev.lambdaurora.affectionate.mixin.client;
 
 import dev.lambdaurora.affectionate.client.AffectionateClient;
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
-import net.minecraft.client.render.entity.model.PlayerEntityModel;
-import net.minecraft.entity.LivingEntity;
-import org.quiltmc.loader.api.minecraft.ClientOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@ClientOnly
-@Mixin(PlayerEntityModel.class)
+@Environment(EnvType.CLIENT)
+@Mixin(PlayerModel.class)
 public class PlayerEntityModelMixin<T extends LivingEntity> {
 	@SuppressWarnings("unchecked")
 	@Inject(
-			method = "setAngles(Lnet/minecraft/entity/LivingEntity;FFFFF)V",
+			method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/client/render/entity/model/BipedEntityModel;setAngles(Lnet/minecraft/entity/LivingEntity;FFFFF)V",
+					target = "Lnet/minecraft/client/model/HumanoidModel;setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V",
 					shift = At.Shift.AFTER
 			)
 	)
 	private void onSetAngles(T livingEntity, float f, float limbDistance, float animationProgress, float i, float pitch, CallbackInfo ci) {
 		if (livingEntity instanceof AffectionatePlayerEntity player) {
-			AffectionateClient.updatePlayerModel((PlayerEntityModel<T>) (Object) this, player, animationProgress - livingEntity.age);
+			AffectionateClient.updatePlayerModel((PlayerModel<T>) (Object) this, player, animationProgress - livingEntity.tickCount);
 		}
 	}
 }

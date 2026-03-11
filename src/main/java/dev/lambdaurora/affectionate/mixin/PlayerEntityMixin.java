@@ -17,15 +17,15 @@
 
 package dev.lambdaurora.affectionate.mixin;
 
+import com.mojang.math.Constants;
 import dev.lambdaurora.affectionate.Affectionate;
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.util.math.MathConstants;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,12 +34,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(PlayerEntity.class)
+@Mixin(Player.class)
 public abstract class PlayerEntityMixin extends LivingEntity implements AffectionatePlayerEntity {
 	@Unique
 	private int affectionate$heartSendingTicks;
 
-	protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
+	protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, Level world) {
 		super(entityType, world);
 	}
 
@@ -64,15 +64,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Affectio
 		if (this.affectionate$isSendingHeart()) {
 			this.affectionate$heartSendingTicks--;
 
-			if (this.getWorld().isClient() && this.affectionate$heartSendingTicks <= 5) {
-				var relativePos = new Vector3f(0.f, 1.5f, .60f);
-				relativePos.rotate(new Quaternionf().rotationXYZ(0.f, -Affectionate.getEffectiveBodyYaw(this) * MathConstants.RADIANS_PER_DEGREE, 0.f));
-				Vec3d transformedPos = new Vec3d(relativePos);
+			if (this.level().isClientSide() && this.affectionate$heartSendingTicks <= 5) {
+				var relativePos = new Vec3(0.d, 1.5d, .60d);
+				Vec3 transformedPos = relativePos
+					.scale(this.getAgeScale())
+					.yRot(Affectionate.getEffectiveBodyYaw(this) * -Constants.RAD_TO_DEG);
 
 				var pos = this.getPos().add(transformedPos);
-				this.getWorld().addImportantParticle(ParticleTypes.HEART,
-						pos.getX(), pos.getY(), pos.getZ(),
-						transformedPos.getX() * 10, -0.2f, transformedPos.getZ() * 10
+				this.level().addAlwaysVisibleParticle(ParticleTypes.HEART,
+						pos.x(), pos.y(), pos.z(),
+						transformedPos.x() * 10, -0.2f, transformedPos.z() * 10
 				);
 			}
 		}

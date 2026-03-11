@@ -17,20 +17,22 @@
 
 package dev.lambdaurora.affectionate.entity;
 
+import com.mojang.math.Constants;
 import dev.lambdaurora.affectionate.Affectionate;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
-import net.minecraft.util.math.MathConstants;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -41,25 +43,27 @@ import org.joml.Vector3f;
  * @version 1.0.0
  * @since 1.0.0
  */
+@SuppressWarnings( "resource" )
 public class LapSeatEntity extends Entity {
-	private static final TrackedData<Integer> OWNER = DataTracker.registerData(LapSeatEntity.class, TrackedDataHandlerRegistry.INTEGER);
+	private static final EntityDataAccessor<Integer> OWNER = SynchedEntityData.defineId(LapSeatEntity.class, EntityDataSerializers.INT);
 	private LivingEntity trackedOwner;
 
-	public LapSeatEntity(EntityType<?> type, World world) {
+	public LapSeatEntity(EntityType<?> type, Level world) {
 		super(type, world);
 
-		this.noClip = true;
+		this.noPhysics = true;
 	}
 
 	public void setTrackedOwner(LivingEntity trackedOwner) {
-		this.dataTracker.set(OWNER, trackedOwner == null ? 0 : trackedOwner.getId());
+		this.entityData.set(OWNER, trackedOwner == null ? 0 : trackedOwner.getId());
+		this.updateTrackedPosition(Entity::setPos);
 	}
 
 	@Override
-	public void onTrackedDataUpdate(TrackedData<?> data) {
+	public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
 		if (OWNER.equals(data)) {
-			int ownerId = this.dataTracker.get(OWNER);
-			var owner = this.getWorld().getEntityById(ownerId);
+			int ownerId = this.entityData.get(OWNER);
+			var owner = this.level().getEntity(ownerId);
 
 			if (owner instanceof LivingEntity player) {
 				this.trackedOwner = player;
@@ -70,17 +74,18 @@ public class LapSeatEntity extends Entity {
 		}
 	}
 
-	public void updateTrackedPosition(Entity.PositionUpdater positionUpdater) {
+	public void updateTrackedPosition(Entity.MoveFunction positionUpdater) {
 		if (this.trackedOwner == null) return;
 
-		var relativePos = new Vector3f(0.f, .4f, .55f);
-		relativePos.rotate(new Quaternionf().rotationXYZ(0.f, -Affectionate.getEffectiveBodyYaw(this.trackedOwner) * MathConstants.RADIANS_PER_DEGREE, 0.f));
-		Vec3d transformedPos = new Vec3d(relativePos);
+		var relativePos = new Vec3(0.d, .7d, .55d);
+		Vec3 transformedPos = relativePos
+				.scale(this.trackedOwner.getAgeScale())
+				.yRot(Affectionate.getEffectiveBodyYaw(this.trackedOwner) * -Constants.RAD_TO_DEG);
 
 		var newPos = this.trackedOwner.getPos().add(transformedPos);
-		positionUpdater.accept(this, newPos.getX(), newPos.getY(), newPos.getZ());
+		positionUpdater.accept(this, newPos.x(), newPos.y(), newPos.z());
 
-		this.setYaw(this.getVisualYaw());
+		this.setYaw(this.getVisualRotationYInDegrees());
 	}
 
 	@Override
@@ -89,29 +94,30 @@ public class LapSeatEntity extends Entity {
 		this.setTrackedOwner(null);
 	}
 
+
 	@Override
-	protected void initDataTracker() {
-		this.dataTracker.startTracking(OWNER, 0);
+	protected void defineSynchedData(@NotNull SynchedEntityData.Builder builder) {
+		builder.define(OWNER, 0);
 	}
 
 	@Override
-	public double getMountedHeightOffset() {
-		return 0;
+	public @NotNull Vec3 getPassengerRidingPosition(Entity entity) {
+		return this.getPos();
 	}
 
 	@Override
-	public Vec3d updatePassengerForDismount(LivingEntity passenger) {
-		var vec = super.updatePassengerForDismount(passenger);
+	public @NotNull Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+		var vec = super.getDismountLocationForPassenger(passenger);
 
-		if (this.getWorld().getBlockState(this.getBlockPos().up()).isAir()) {
-			return new Vec3d(vec.x, this.getBlockY() + 1, vec.z);
+		if (this.level().getBlockState(this.getBlockPos().above()).isAir()) {
+			return new Vec3(vec.x, this.getBlockY() + 1, vec.z);
 		}
 
 		return vec;
 	}
 
 	@Override
-	public boolean hasNoGravity() {
+	public boolean isNoGravity() {
 		return true;
 	}
 
@@ -122,14 +128,14 @@ public class LapSeatEntity extends Entity {
 	}
 
 	@Override
-	protected void writeCustomDataToNbt(NbtCompound nbt) {
+	protected void writeCustomDataFromNbt(NbtCompound nbt) {
 	}
 
 	/* Networking */
 
 	@Override
-	public Packet<ClientPlayPacketListener> createSpawnPacket() {
-		return new EntitySpawnS2CPacket(this);
+	public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket( ServerEntity serverEntity) {
+		return new ClientboundAddEntityPacket(this, serverEntity);
 	}
 
 	/* Ticking */
@@ -138,8 +144,8 @@ public class LapSeatEntity extends Entity {
 	public void tick() {
 		super.tick();
 
-		if (!this.getWorld().isClient()) {
-			if (!this.hasPassengers() || this.trackedOwner == null || this.trackedOwner.isRemoved() || !this.trackedOwner.hasVehicle()) {
+		if (!this.level().isClientSide()) {
+			if (!this.isVehicle() || this.trackedOwner == null || this.trackedOwner.isRemoved() || !this.trackedOwner.isPassenger()) {
 				this.discard();
 			}
 		}

@@ -17,55 +17,57 @@
 
 package dev.lambdaurora.affectionate.client;
 
-import com.mojang.blaze3d.platform.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.lambdaurora.affectionate.Affectionate;
 import dev.lambdaurora.affectionate.client.renderer.LapSeatEntityRenderer;
 import dev.lambdaurora.affectionate.entity.AffectionatePlayerEntity;
+import dev.lambdaurora.affectionate.network.SendHeartsPayload;
+import dev.yumi.mc.core.api.ModContainer;
+import dev.yumi.mc.core.api.entrypoint.client.ClientModInitializer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBind;
-import net.minecraft.client.render.entity.model.PlayerEntityModel;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.math.MathHelper;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.loader.api.minecraft.ClientOnly;
-import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
-import org.quiltmc.qsl.lifecycle.api.client.event.ClientWorldTickEvents;
-import org.quiltmc.qsl.networking.api.PacketByteBufs;
-import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
+import net.minecraft.world.entity.LivingEntity;
 
-@ClientOnly
-public final class AffectionateClient implements ClientModInitializer, ClientWorldTickEvents.Start {
-	private static final KeyBind SEND_HEART_KEY_BIND = KeyBindingHelper.registerKeyBinding(new KeyBind(
-			"key.affectionate.interact", InputUtil.KEY_G_CODE, KeyBind.MULTIPLAYER_CATEGORY
-	));
+@Environment(EnvType.CLIENT)
+public final class AffectionateClient implements ClientModInitializer {
+	private static final KeyMapping SEND_HEART_KEY_BIND = new KeyMapping(
+		"key.affectionate.interact", InputConstants.KEY_G, KeyMapping.CATEGORY_MULTIPLAYER
+	);
 
 	public static final AffectionateClient INSTANCE = new AffectionateClient();
 
 	@Override
 	public void onInitializeClient(ModContainer mod) {
 		EntityRendererRegistry.register(Affectionate.LAP_SEAT_ENTITY_TYPE, LapSeatEntityRenderer::new);
+		KeyBindingHelper.registerKeyBinding(SEND_HEART_KEY_BIND);
 
-		ClientPlayNetworking.registerGlobalReceiver(Affectionate.SEND_HEARTS_PACKET, (client, handler, buf, responseSender) -> {
-			int playerId = buf.readVarInt();
-
-			client.execute(() -> {
-				if (client.world != null && client.world.getEntityById(playerId) instanceof AffectionatePlayerEntity player) {
+		ClientPlayNetworking.registerGlobalReceiver(SendHeartsPayload.TYPE, (payload, ctx) -> {
+			ctx.client().execute(() -> {
+				if (ctx.client().level != null && ctx.client().level.getEntity(payload.playerId()) instanceof AffectionatePlayerEntity player) {
 					player.affectionate$startSendHeart();
 				}
 			});
 		});
+
+		ClientTickEvents.START_WORLD_TICK.register(this::onStartWorldTick);
 	}
 
-	@Override
-	public void startWorldTick(MinecraftClient client, ClientWorld world) {
-		if (SEND_HEART_KEY_BIND.wasPressed() && client.player != null) {
+	public void onStartWorldTick(ClientLevel world) {
+		var client = Minecraft.getInstance();
+		if (SEND_HEART_KEY_BIND.isDown() && client.player != null) {
 			if (!((AffectionatePlayerEntity) client.player).affectionate$isSendingHeart()) {
 				((AffectionatePlayerEntity) client.player).affectionate$startSendHeart();
-
-				ClientPlayNetworking.send(Affectionate.SEND_HEARTS_PACKET, PacketByteBufs.empty());
+				
+				ClientPlayNetworking.send(new SendHeartsPayload(-1));
 			}
 		}
 	}
@@ -78,17 +80,17 @@ public final class AffectionateClient implements ClientModInitializer, ClientWor
 	 * @param tickDelta the tick delta
 	 * @param <E> the type of entity the model accepts
 	 */
-	public static <E extends LivingEntity> void updatePlayerModel(PlayerEntityModel<E> model, AffectionatePlayerEntity player, float tickDelta) {
+	public static <E extends LivingEntity> void updatePlayerModel(PlayerModel<E> model, AffectionatePlayerEntity player, float tickDelta) {
 		if (player.affectionate$isSendingHeart()) {
 			float delta = player.affectionate$getHeartSendingDelta(tickDelta);
 
 			final float targetPitch = (float) Math.toRadians(-110.f);
-			model.rightArm.pitch = MathHelper.lerp(delta, model.rightArm.pitch, targetPitch);
-			model.leftArm.pitch = MathHelper.lerp(delta, model.leftArm.pitch, targetPitch);
+			model.rightArm.xRot = MathHelper.lerp(delta, model.rightArm.xRot, targetPitch);
+			model.leftArm.xRot = MathHelper.lerp(delta, model.leftArm.xRot, targetPitch);
 
 			final float targetYaw = (float) Math.toRadians(25.f);
-			model.rightArm.yaw = MathHelper.lerp(delta, model.rightArm.yaw, -targetYaw);
-			model.leftArm.yaw = MathHelper.lerp(delta, model.leftArm.yaw, targetYaw);
+			model.rightArm.yRot = MathHelper.lerp(delta, model.rightArm.yRot, -targetYaw);
+			model.leftArm.yRot = MathHelper.lerp(delta, model.leftArm.yRot, targetYaw);
 		}
 	}
 }

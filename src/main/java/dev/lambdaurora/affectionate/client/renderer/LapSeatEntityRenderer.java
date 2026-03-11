@@ -18,14 +18,15 @@
 package dev.lambdaurora.affectionate.client.renderer;
 
 import dev.lambdaurora.affectionate.entity.LapSeatEntity;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.entity.EmptyEntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import org.quiltmc.loader.api.minecraft.ClientOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 
-@ClientOnly
-public class LapSeatEntityRenderer extends EmptyEntityRenderer<LapSeatEntity> {
-	public LapSeatEntityRenderer(EntityRendererFactory.Context ctx) {
+@Environment(EnvType.CLIENT)
+public class LapSeatEntityRenderer extends NoopRenderer<LapSeatEntity> {
+	public LapSeatEntityRenderer(EntityRendererProvider.Context ctx) {
 		super(ctx);
 	}
 
